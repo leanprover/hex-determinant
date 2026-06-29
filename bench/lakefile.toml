@@ -1,0 +1,15 @@
+name = "hex-determinant-bench"
+defaultTargets = ["hexdeterminant_bench"]
+
+[[require]]
+name = "HexDeterminant"
+path = ".."
+
+[[require]]
+name = "lean-bench"
+git = "https://github.com/kim-em/lean-bench.git"
+rev = "09645b5beba21307266f4e0bf375c3c363550ae9"
+
+[[lean_exe]]
+name = "hexdeterminant_bench"
+root = "HexDeterminant.Bench"

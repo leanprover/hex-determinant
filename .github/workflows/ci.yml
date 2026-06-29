@@ -1,0 +1,42 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      BENCH_VERIFY_HARD_CAP_SECONDS: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          auto-config: false
+          build: false
+      - name: Install oracle dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev
+          python3 -m pip install --user python-flint
+      - name: Build library
+        run: lake build
+      - name: Build conformance
+        run: cd conformance && lake build
+      - name: FLINT conformance oracle
+        run: bash scripts/ci/run_oracles.sh
+      - name: Build + verify bench
+        run: |
+          cd bench
+          lake build hexdeterminant_bench
+          bash ../scripts/ci/check_bench_verify_budget.sh hexdeterminant_bench
+      - name: Assert Mathlib-free
+        run: |
+          if find . -type d -name mathlib | grep -q .; then
+            echo "ERROR: a package pulled in Mathlib"; exit 1; fi
+          if grep -rqE '^import Mathlib' HexDeterminant conformance bench 2>/dev/null; then
+            echo "ERROR: a source file imports Mathlib"; exit 1; fi
+          echo "Mathlib-free OK"
