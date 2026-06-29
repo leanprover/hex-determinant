@@ -2,11 +2,6 @@ name = "hex-determinant"
 defaultTargets = ["HexDeterminant"]
 
 [[require]]
-name = "batteries"
-git = "https://github.com/leanprover-community/batteries.git"
-rev = "v4.30.0-rc2"
-
-[[require]]
 name = "HexMatrix"
 git = "https://github.com/kim-em/hex-matrix.git"
 rev = "3de422434b4565933a0315338e714f303bb6442f"
