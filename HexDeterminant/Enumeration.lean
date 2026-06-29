@@ -7,7 +7,6 @@ Authors: Kim Morrison
 module
 
 public import Init.Grind.Ring.Field
-public import Batteries.Data.List.Lemmas
 public import HexMatrix.Vector.Insert
 
 public section
@@ -178,8 +177,8 @@ private theorem inversionCount_adjacent_swap_parity {n : Nat}
     cases Nat.lt_or_gt_of_ne hval with
     | inl hab => exact Or.inl hab
     | inr hba => exact Or.inr hba
-  rw [show pre ++ a :: b :: post = pre ++ ([a, b] ++ post) by simp]
-  rw [show pre ++ b :: a :: post = pre ++ ([b, a] ++ post) by simp]
+  rw [show pre ++ a :: b :: post = pre ++ ([a, b] ++ post) by simp,
+    show pre ++ b :: a :: post = pre ++ ([b, a] ++ post) by simp]
   have hcross :
       crossInversionCount pre ([a, b] ++ post) =
         crossInversionCount pre ([b, a] ++ post) := by
@@ -189,14 +188,9 @@ private theorem inversionCount_adjacent_swap_parity {n : Nat}
       crossInversionCount [a, b] post =
         crossInversionCount [b, a] post := by
     exact crossInversionCount_pair_swap_left post a b
-  rw [inversionCount_append pre ([a, b] ++ post)]
-  rw [inversionCount_append pre ([b, a] ++ post)]
-  rw [hcross]
-  rw [inversionCount_append [a, b] post]
-  rw [inversionCount_append [b, a] post]
-  rw [htail]
-  rw [inversionCount_pair a b]
-  rw [inversionCount_pair b a]
+  rw [inversionCount_append pre ([a, b] ++ post), inversionCount_append pre ([b, a] ++ post),
+    hcross, inversionCount_append [a, b] post, inversionCount_append [b, a] post, htail,
+    inversionCount_pair a b, inversionCount_pair b a]
   cases horder with
   | inl hab =>
       have hba : ¬ b < a := by omega
@@ -247,7 +241,7 @@ private theorem inversionCount_swap_separated_parity {n : Nat}
       have hmid :
           inversionCount (pre ++ x :: b :: xs ++ a :: post) % 2 =
             (inversionCount (pre ++ x :: a :: xs ++ b :: post) + 1) % 2 := by
-        simpa only [List.cons_append, List.append_assoc] using
+        simpa only [List.cons_append, List.append_assoc, List.nil_append] using
           (ih (pre ++ [x]) hnodup_tail)
       have hswap₂ :
           inversionCount (pre ++ x :: a :: xs ++ b :: post) % 2 =
