@@ -76,6 +76,7 @@ private theorem detProduct_rowScale {R : Type u} [Lean.Grind.CommRing R] {n : Na
     (M : Matrix R n n) (i : Fin n) (c : R) (perm : Vector (Fin n) n) :
     detProduct (rowScale M i c) perm = c * detProduct M perm := by
   unfold detProduct
+  simp only [Fin.foldl_eq_finRange_foldl]
   calc
     (List.finRange n).foldl
         (fun acc r => acc * (rowScale M i c)[r][perm[r]]) 1 =
@@ -180,6 +181,7 @@ private theorem detProduct_colDuplicate_swapValues {R : Type u}
     (perm : Vector (Fin n) n) :
     detProduct M perm = detProduct M (swapPermutationValues perm src dst) := by
   unfold detProduct
+  simp only [Fin.foldl_eq_finRange_foldl]
   apply List.foldl_mul_congr
   intro r _hmem
   by_cases hsrc : perm[r] = src
@@ -257,6 +259,7 @@ private theorem detProduct_colAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     change perm.toList[pivot.val]'(by simp [Vector.length_toList, pivot.isLt]) = dst
     simp [pivot] at hget ⊢
   unfold detProduct
+  simp only [Fin.foldl_eq_finRange_foldl]
   calc
     (List.finRange n).foldl
         (fun acc i => acc * (colAdd M src dst c)[i][perm[i]]) 1 =
@@ -437,6 +440,7 @@ private theorem detProduct_rowAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     detProduct (rowAdd M src dst c) perm =
       detProduct M perm + c * detProduct (rowAddDuplicate M src dst) perm := by
   unfold detProduct
+  simp only [Fin.foldl_eq_finRange_foldl]
   calc
     (List.finRange n).foldl
         (fun acc r => acc * (rowAdd M src dst c)[r][perm[r]]) 1 =
@@ -1003,25 +1007,21 @@ theorem det_colPermute_vector {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
         rw [permutationVectors_composePermutationValues_left_sum
           (R := R) sigma hsigma (fun tau => detTerm M tau)]
 
-/-- Swapping two columns negates determinant. -/
+/-- Swapping two distinct columns negates the determinant. The column mirror of
+`det_rowSwap`, proved by transposing to the row law. -/
+@[grind =]
 theorem det_colSwap {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (i j : Fin n) (h : i ≠ j) :
-    det (ofFn fun r c => M[r][finTranspose i j c]) = -det M := by
-  let C : Matrix R n n := ofFn fun r c => M[r][finTranspose i j c]
-  have htranspose : C.transpose = rowSwap M.transpose i j := by
-    ext r hr c hc
-    let rr : Fin n := ⟨r, hr⟩
-    let cc : Fin n := ⟨c, hc⟩
-    change C.transpose[rr][cc] = (rowSwap M.transpose i j)[rr][cc]
-    rw [rowSwap_get_finTranspose M.transpose i j rr h cc,
-      show C.transpose[rr][cc] = C[cc][rr] by simp [Matrix.transpose, Matrix.col],
-      show C[cc][rr] = M[cc][finTranspose i j rr] by simp [C, ofFn]]
-    simp [Matrix.transpose, Matrix.col]
-  calc
-    det C = det C.transpose := (det_transpose C).symm
-    _ = det (rowSwap M.transpose i j) := by rw [htranspose]
-    _ = -det M.transpose := det_rowSwap M.transpose i j h
-    _ = -det M := by rw [det_transpose M]
+    det (colSwap M i j) = -det M := by
+  rw [← det_transpose (colSwap M i j), transpose_colSwap, det_rowSwap _ _ _ h, det_transpose]
+
+/-- Scaling a column by `c` scales the determinant by `c`. The column mirror of
+`det_rowScale`. -/
+@[grind =]
+theorem det_colScale {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (j : Fin n) (c : R) :
+    det (colScale M j c) = c * det M := by
+  rw [← det_transpose (colScale M j c), transpose_colScale, det_rowScale, det_transpose]
 
 /-- Adding a multiple of one column to a distinct column preserves determinant. -/
 theorem det_colAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
