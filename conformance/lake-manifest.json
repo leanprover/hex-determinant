@@ -40,10 +40,10 @@
       "type": "git",
       "subDir": null,
       "scope": "",
-      "rev": "99706e1ab14f79a915b3fd86ffa37da4a800a0d6",
+      "rev": "e221fd8e1520fee80419e19ff50d1520bf3ec8d5",
       "name": "HexMatrix",
       "manifestFile": "lake-manifest.json",
-      "inputRev": "99706e1ab14f79a915b3fd86ffa37da4a800a0d6",
+      "inputRev": "e221fd8e1520fee80419e19ff50d1520bf3ec8d5",
       "inherited": true,
       "configFile": "lakefile.toml"
     },
