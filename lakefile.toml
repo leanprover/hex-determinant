@@ -14,7 +14,7 @@ rev = "a3ab4fd9a79efbe6b07337836b3b5828d22d65a6"
 [[require]]
 name = "HexMatrix"
 git = "https://github.com/leanprover/hex-matrix.git"
-rev = "9b6ec9285021793e9f43e1c7b3b37da957b6f2c4"
+rev = "ce6c24451327c1a7ddfea3cd31739966f3622038"
 
 [[lean_lib]]
 name = "HexDeterminant"
