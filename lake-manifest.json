@@ -7,10 +7,10 @@
       "type": "git",
       "subDir": null,
       "scope": "",
-      "rev": "f1580d28c2e9ff9e8d4d7cdef9dccbaa17780b03",
+      "rev": "a3ab4fd9a79efbe6b07337836b3b5828d22d65a6",
       "name": "HexBasic",
       "manifestFile": "lake-manifest.json",
-      "inputRev": "f1580d28c2e9ff9e8d4d7cdef9dccbaa17780b03",
+      "inputRev": "a3ab4fd9a79efbe6b07337836b3b5828d22d65a6",
       "inherited": false,
       "configFile": "lakefile.toml"
     },
@@ -19,10 +19,10 @@
       "type": "git",
       "subDir": null,
       "scope": "",
-      "rev": "d45bf749d6283726b8df43b5be9e6dde350666d6",
+      "rev": "9b6ec9285021793e9f43e1c7b3b37da957b6f2c4",
       "name": "HexMatrix",
       "manifestFile": "lake-manifest.json",
-      "inputRev": "d45bf749d6283726b8df43b5be9e6dde350666d6",
+      "inputRev": "9b6ec9285021793e9f43e1c7b3b37da957b6f2c4",
       "inherited": false,
       "configFile": "lakefile.toml"
     },
@@ -31,10 +31,10 @@
       "type": "git",
       "subDir": null,
       "scope": "",
-      "rev": "5c57f3857ba81924a88b2cdf4f062e34ec04ff11",
+      "rev": "023ce7d62a0531e22a5331e20b587817a80d49ff",
       "name": "batteries",
       "manifestFile": "lake-manifest.json",
-      "inputRev": "v4.30.0-rc2",
+      "inputRev": "main",
       "inherited": true,
       "configFile": "lakefile.toml"
     }

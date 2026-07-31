@@ -20,7 +20,7 @@ universe u
 namespace Matrix
 variable {α : Type u}
 
-/-! ### Strictly-increasing column-tuple enumeration
+/-! # Strictly-increasing column-tuple enumeration
 
 The Cauchy-Binet sum-of-squares formula needs a Mathlib-free enumeration of the
 "essentially distinct" column choices: each strictly increasing length-`n`
@@ -278,7 +278,7 @@ theorem selectedColumnTuples_nodup {n m : Nat} :
     (selectedColumnTuples n m).Nodup :=
   selectedColumnTuplesUpTo_nodup m n m
 
-/-! ### Canonical sort and orbit factorization for injective column tuples
+/-! # Canonical sort and orbit factorization for injective column tuples
 
 For the Cauchy-Binet orbit-grouping argument we need, for every injective
 ordered column tuple `cols : Vector (Fin m) n`, a canonical factorization
@@ -557,7 +557,7 @@ theorem sortInjTuple_mem_selectedColumnTuples {m n : Nat}
   (mem_selectedColumnTuples_iff (sortInjTuple cols)).mpr
     (isStrictlyIncreasingColumnTuple_sortInjTuple cols hinj)
 
-/-! ### Forward injectivity of the sort/permutation pair -/
+/-! # Forward injectivity of the sort/permutation pair -/
 
 /-- Pairwise distinctness: two injective column tuples that map to the
 same `(sortInjTuple, sortInjPerm)` pair must be equal. -/
@@ -581,7 +581,7 @@ theorem sortInj_pair_injective {m n : Nat} {cols cols' : Vector (Fin m) n}
   rw [hsort]
   exact congrArg (fun k : Fin n => (sortInjTuple cols')[k]) hperm_apply
 
-/-! ### Reconstruction from `selectedColumnTuples × permutationVectors`
+/-! # Reconstruction from `selectedColumnTuples × permutationVectors`
 
 For a strictly-increasing `sel` and a permutation `perm`, the
 "reconstruction" `Vector.ofFn (fun i => sel[perm[i]])` is itself
@@ -621,6 +621,7 @@ private theorem columnTupleMatrix_reconstructInjTuple_eq
     columnTupleMatrix A (columnTupleVectorFn (reconstructInjTuple sel perm)) =
       columnTupleMatrix A (fun i => sel[perm[i]]) := by
   ext r hr c hc
+  simp only [getElem_rows]
   change
     (columnTupleMatrix A (columnTupleVectorFn (reconstructInjTuple sel perm)))[
         (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
@@ -831,7 +832,7 @@ theorem sortInjTuple_reconstructInjTuple {m n : Nat}
   -- Therefore: sel[perm[(inv perm)[r]]] = sel[r] via congrArg.
   exact congrArg (fun k : Fin n => sel[k]) hperm_apply
 
-/-! ### Bijection wrappers -/
+/-! # Bijection wrappers -/
 
 /-- Forward-then-backward identity: reconstruction inverts the canonical
 sort/permutation pair on injective column tuples. -/
@@ -1162,12 +1163,10 @@ theorem columnTupleMatrix_takeRows_firstColumns_eq_principalSubmatrix
     {R : Type u} {n : Nat} (M : Matrix R n n) (k : Nat) (hk : k ≤ n) :
     columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn (firstColumns k n hk)) =
       principalSubmatrix M k hk := by
-  ext i hi j hj
-  change
-    (columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn (firstColumns k n hk)))[
-        (⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)] =
-      (principalSubmatrix M k hk)[(⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)]
-  simp [columnTupleMatrix, takeRows, principalSubmatrix, columnTupleVectorFn, firstColumns, ofFn]
+  apply ext_getElem
+  intro i j
+  rw [getElem_columnTupleMatrix, getElem_takeRows, getElem_principalSubmatrix]
+  simp only [columnTupleVectorFn_apply, getElem_firstColumns]
 
 /-- The Gram determinant of the first `k` rows of a positive-diagonal integer
 upper-triangular matrix is strictly positive. The leading-principal minor
@@ -1192,16 +1191,16 @@ theorem det_gramMatrix_takeRows_pos_of_upperTriangular_pos_diag
     intro i j hij
     let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
     let jj : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
-    have hentry : (principalSubmatrix M k hk)[i][j] = M[ii][jj] := by
-      simp [principalSubmatrix, ofFn, ii, jj]
+    have hentry : (principalSubmatrix M k hk)[i][j] = M[ii][jj] :=
+      getElem_principalSubmatrix M k hk i j
     rw [hentry]
     exact hzero ii jj hij
   have hprefixDiag :
       ∀ i : Fin k, 0 < (principalSubmatrix M k hk)[i][i] := by
     intro i
     let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
-    have hentry : (principalSubmatrix M k hk)[i][i] = M[ii][ii] := by
-      simp [principalSubmatrix, ofFn, ii]
+    have hentry : (principalSubmatrix M k hk)[i][i] = M[ii][ii] :=
+      getElem_principalSubmatrix M k hk i i
     rw [hentry]
     exact hdiag ii
   have hminor_pos :

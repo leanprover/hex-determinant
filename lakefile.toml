@@ -1,15 +1,20 @@
 name = "hex-determinant"
 defaultTargets = ["HexDeterminant"]
 
+leanOptions = [
+  { name = "doc.verso", value = true },
+  { name = "doc.verso.suggestions", value = false },
+]
+
 [[require]]
 name = "HexBasic"
 git = "https://github.com/leanprover/hex-basic.git"
-rev = "f1580d28c2e9ff9e8d4d7cdef9dccbaa17780b03"
+rev = "a3ab4fd9a79efbe6b07337836b3b5828d22d65a6"
 
 [[require]]
 name = "HexMatrix"
 git = "https://github.com/leanprover/hex-matrix.git"
-rev = "d45bf749d6283726b8df43b5be9e6dde350666d6"
+rev = "9b6ec9285021793e9f43e1c7b3b37da957b6f2c4"
 
 [[lean_lib]]
 name = "HexDeterminant"

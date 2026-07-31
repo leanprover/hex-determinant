@@ -18,7 +18,7 @@ universe u
 namespace Matrix
 variable {α : Type u}
 
-/-! ### Plucker minor helpers
+/-! # Plucker minor helpers
 
 Encoding for the universal 3-term Plucker identity substrate. -/
 
@@ -105,8 +105,7 @@ theorem mMatrix_entry_lt {R : Type u} {n : Nat}
     (i : Fin (n + 1)) (j : Fin (n + 1)) (h : j.val < n) :
     (mMatrix B v p)[i][j] = B[skipIndex p i][(⟨j.val, h⟩ : Fin n)] := by
   unfold mMatrix
-  rw [getElem_ofFn]
-  exact dif_pos h
+  rw [getElem_ofFn, dif_pos h, getElem_pair_eq_nested]
 
 /-- The last column of `mMatrix B v p` is the vector `v` with row `p`
 deleted. -/
@@ -141,7 +140,8 @@ entry `B[skipIndex2 p q hpq i][j]`. -/
     (B : Matrix R (n + 2) n) (p q : Fin (n + 2)) (hpq : p.val < q.val)
     (i : Fin n) (j : Fin n) :
     (nMatrix B p q hpq)[i][j] = B[skipIndex2 p q hpq i][j] := by
-  simp [nMatrix, ofFn]
+  unfold nMatrix
+  rw [getElem_ofFn, getElem_pair_eq_nested]
 
 /-- The determinant of `nMatrix B p q hpq`: the `n × n` minor of `B`
 with rows `p, q` deleted. -/
@@ -150,7 +150,7 @@ def nDet {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (B : Matrix R (n + 2) n) (p q : Fin (n + 2)) (hpq : p.val < q.val) : R :=
   det (nMatrix B p q hpq)
 
-/-! ### Row-move infrastructure for ordered four-row transports
+/-! # Row-move infrastructure for ordered four-row transports
 
 These helpers transport the determinant of a matrix whose rows are an
 ordered `nMatrix` row sequence with one row displaced downward. Each
@@ -317,7 +317,7 @@ private theorem rowMoveUp_row_between {R : Type u} {n m : Nat}
           apply Fin.ext; simp; omega
         rw [hii]
 
-/-! ### One-row `setRow` transports to ordered `nDet` minors
+/-! # One-row `setRow` transports to ordered `nDet` minors
 
 For `a < b < t` in `Fin (n + 2)`, the private helpers
 `rowMoveUp_setRow_nMatrix_replace_first` and
@@ -342,6 +342,7 @@ private theorem rowMoveUp_setRow_nMatrix_replace_first
         (t.val - a.val - 2) hsk =
       nMatrix B b t hbt := by
   ext i hi j hj
+  simp only [getElem_rows]
   let ii : Fin n := ⟨i, hi⟩
   show (rowMoveUp (setRow (nMatrix B a b hab) s B[a]) a.val
         (t.val - a.val - 2) hsk)[ii][(⟨j, hj⟩ : Fin n)] =
@@ -481,6 +482,7 @@ private theorem rowMoveUp_setRow_nMatrix_replace_second
         (t.val - b.val - 1) hsk =
       nMatrix B a t (Nat.lt_trans hab hbt) := by
   ext i hi j hj
+  simp only [getElem_rows]
   let ii : Fin n := ⟨i, hi⟩
   have hat : a.val < t.val := Nat.lt_trans hab hbt
   show (rowMoveUp (setRow (nMatrix B a b hab) s B[b]) (b.val - 1)
@@ -720,7 +722,7 @@ private theorem det_setRow_nMatrix_r3_r1
   rw [h_nDet, hdet_rm, ← Lean.Grind.Semiring.mul_assoc,
       neg_one_pow_mul_self, Lean.Grind.Semiring.one_mul]
 
-/-! ### Double-row `setRow` transport to ordered `nDet` minors
+/-! # Double-row `setRow` transport to ordered `nDet` minors
 
 For ordered rows `r0 < r1 < r2 < r3`, the double replacement
 `setRow (setRow (nMatrix B r0 r1 h01) s2 B[r0]) s3 B[r1]` (with
@@ -742,6 +744,7 @@ private theorem rowMoveUp_setRow_of_gt {R : Type u} {n m : Nat}
     (v : Vector R m) (hj : src + k < j.val) :
     rowMoveUp (setRow M j v) src k h = setRow (rowMoveUp M src k h) j v := by
   ext i hi jcol hjcol
+  simp only [getElem_rows]
   let ii : Fin n := ⟨i, hi⟩
   show (rowMoveUp (setRow M j v) src k h)[ii][(⟨jcol, hjcol⟩ : Fin m)] =
     (setRow (rowMoveUp M src k h) j v)[ii][(⟨jcol, hjcol⟩ : Fin m)]
@@ -901,8 +904,7 @@ theorem twoColMatrix_entry_lt {R : Type u} {n : Nat}
     (i j : Fin (n + 2)) (h : j.val < n) :
     (twoColMatrix B u v)[i][j] = B[i][(⟨j.val, h⟩ : Fin n)] := by
   unfold twoColMatrix
-  rw [getElem_ofFn]
-  exact dif_pos h
+  rw [getElem_ofFn, dif_pos h, getElem_pair_eq_nested]
 
 /-- The penultimate column of `twoColMatrix B u v` is `u`. -/
 theorem twoColMatrix_entry_penultimate {R : Type u} {n : Nat}
@@ -943,6 +945,7 @@ theorem deleteRowCol_twoColMatrix_last_eq_mMatrix {R : Type u} {n : Nat}
     deleteRowCol (twoColMatrix B u v) p (Fin.last (n + 1)) =
       mMatrix B u p := by
   ext i hi j hj
+  simp only [getElem_rows]
   let ii : Fin (n + 1) := ⟨i, hi⟩
   let jj : Fin (n + 1) := ⟨j, hj⟩
   change (deleteRowCol (twoColMatrix B u v) p (Fin.last (n + 1)))[ii][jj] =
@@ -1012,6 +1015,7 @@ theorem mMatrix_eq_setCol_last {R : Type u} {n : Nat}
       setCol (mMatrix B w p) (Fin.last n)
         (fun i : Fin (n + 1) => v[skipIndex p i]) := by
   ext i hi j hj
+  simp only [getElem_rows]
   change (mMatrix B v p)[(⟨i, hi⟩ : Fin (n + 1))][(⟨j, hj⟩ : Fin (n + 1))] =
     (setCol (mMatrix B w p) (Fin.last n)
         (fun i : Fin (n + 1) => v[skipIndex p i]))[(⟨i, hi⟩ : Fin (n + 1))][(⟨j, hj⟩ : Fin (n + 1))]
@@ -1279,6 +1283,7 @@ theorem deleteRowCol_mMatrix_at_q_minus_one_eq_nMatrix_of_lt
         (⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 1)) (Fin.last n) =
       nMatrix B p q hpq := by
   ext i hi j hj
+  simp only [getElem_rows]
   let ii : Fin n := ⟨i, hi⟩
   let jj : Fin n := ⟨j, hj⟩
   change (deleteRowCol (mMatrix B v p)
@@ -1371,6 +1376,7 @@ theorem deleteRowCol_mMatrix_at_q_eq_nMatrix_of_gt
         (⟨q.val, by have := p.isLt; omega⟩ : Fin (n + 1)) (Fin.last n) =
       nMatrix B q p hqp := by
   ext i hi j hj
+  simp only [getElem_rows]
   let ii : Fin n := ⟨i, hi⟩
   let jj : Fin n := ⟨j, hj⟩
   change (deleteRowCol (mMatrix B v p)
