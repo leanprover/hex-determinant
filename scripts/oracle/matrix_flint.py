@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""python-flint oracle driver for `hex-matrix`.
+"""python-flint oracle driver for the Hex matrix libraries.
 
 Reads a JSONL stream produced by `lake exe hexmatrix_emit_fixtures`
 (or the committed sample at
@@ -30,6 +30,14 @@ Operations cross-checked
   (b) each Lean basis vector is annihilated by `M` over `Q`,
   (c) the Lean basis vectors are linearly independent
       (rank of the basis matrix equals the nullity).
+* `charpoly`  — Lean's Samuelson--Berkowitz characteristic polynomial.
+  python-flint's `fmpz_mat.charpoly()` returns an `fmpz_poly`; both sides
+  are compared as the complete ascending coefficient list, without trimming
+  or otherwise normalising it.
+* `hnf`       — Lean's row Hermite normal form, compared entrywise with
+  FLINT's canonical `fmpz_mat.hnf()` result.
+* `hnf-transform` — the form is compared canonically and the independently
+  accumulated transform is checked through `U * A = H`.
 
 Usage::
 
@@ -44,10 +52,11 @@ Usage::
     python3 scripts/oracle/matrix_flint.py path/to/file.jsonl
 
 The same driver serves the `hex-row-reduce` (`rank`/`rref`/`nullspace`),
-`hex-determinant` (`det`), and `hex-bareiss` (`bareiss`) fixture streams; the
-op dispatch is keyed per result record, so each per-library fixture file is
-self-contained. `--check` reads the `hex-determinant` stream as a representative
-default; `scripts/ci/run_oracles.sh` passes each library's path explicitly.
+`hex-determinant` (`det`), `hex-bareiss` (`bareiss`), and `hex-char-poly`
+(`charpoly`) fixture streams; the op dispatch is keyed per result record, so
+each per-library fixture file is self-contained. `--check` reads the
+`hex-determinant` stream as a representative default;
+`scripts/ci/run_oracles.sh` passes each library's path explicitly.
 """
 from __future__ import annotations
 
@@ -111,6 +120,79 @@ def _fmpq_mat_from_pairs(rows: list[list[list[int]]]):
     return out
 
 
+def _fmpz_rows(matrix: Any) -> list[list[int]]:
+    return [
+        [int(matrix[i, j]) for j in range(matrix.ncols())]
+        for i in range(matrix.nrows())
+    ]
+
+
+def _check_hnf(
+    *,
+    case_id: str,
+    lib: str,
+    matrix_record: dict[str, Any],
+    lean_value: list[list[int]],
+    failure_dir: Path,
+    profile: str,
+    seed: int,
+    oracle_version: str,
+) -> None:
+    rows = _rows(matrix_record)
+    oracle_value = _fmpz_rows(_fmpz_mat(rows).hnf())
+    assert_equal(
+        lean_value,
+        oracle_value,
+        library=lib,
+        case_id=f"{case_id}:hnf",
+        kind="hnf",
+        input_record=matrix_record,
+        oracle_name="python-flint",
+        oracle_version=oracle_version,
+        failure_dir=failure_dir,
+        profile=profile,
+        seed=seed,
+    )
+
+
+def _check_hnf_transform(
+    *,
+    case_id: str,
+    lib: str,
+    matrix_record: dict[str, Any],
+    lean_value: dict[str, list[list[int]]],
+    failure_dir: Path,
+    profile: str,
+    seed: int,
+    oracle_version: str,
+) -> None:
+    lean_hnf = lean_value["hnf"]
+    _check_hnf(
+        case_id=case_id,
+        lib=lib,
+        matrix_record=matrix_record,
+        lean_value=lean_hnf,
+        failure_dir=failure_dir,
+        profile=profile,
+        seed=seed,
+        oracle_version=oracle_version,
+    )
+    product = _fmpz_mat(lean_value["transform"]) * _fmpz_mat(_rows(matrix_record))
+    assert_equal(
+        _fmpz_rows(product),
+        lean_hnf,
+        library=lib,
+        case_id=f"{case_id}:hnf-transform",
+        kind="hnf-transform",
+        input_record=matrix_record,
+        oracle_name="python-flint",
+        oracle_version=oracle_version,
+        failure_dir=failure_dir,
+        profile=profile,
+        seed=seed,
+    )
+
+
 def _check_det(
     *,
     case_id: str,
@@ -167,6 +249,43 @@ def _check_bareiss(
         profile=profile,
         seed=seed,
         oracle_version=oracle_version,
+    )
+
+
+def _check_charpoly(
+    *,
+    case_id: str,
+    lib: str,
+    matrix_record: dict[str, Any],
+    lean_value: list[int],
+    failure_dir: Path,
+    profile: str,
+    seed: int,
+    oracle_version: str,
+) -> None:
+    rows = _rows(matrix_record)
+    n = len(rows)
+    if any(len(row) != n for row in rows):
+        raise OracleMismatch(
+            f"{lib}/{case_id}: charpoly requires a square matrix, "
+            f"got row lengths {[len(row) for row in rows]}"
+        )
+    polynomial = _fmpz_mat(rows).charpoly()
+    # FLINT and DensePoly both index coefficients by ascending exponent.
+    # Read exactly n + 1 coefficients: do not trim, reverse, or normalise.
+    oracle_value = [int(polynomial[i]) for i in range(n + 1)]
+    assert_equal(
+        lean_value,
+        oracle_value,
+        library=lib,
+        case_id=f"{case_id}:charpoly",
+        kind="charpoly",
+        input_record=matrix_record,
+        oracle_name="python-flint",
+        oracle_version=oracle_version,
+        failure_dir=failure_dir,
+        profile=profile,
+        seed=seed,
     )
 
 
@@ -390,9 +509,12 @@ def check(
     handlers = {
         "det":       _check_det,
         "bareiss":   _check_bareiss,
+        "charpoly":  _check_charpoly,
         "rank":      _check_rank,
         "rref":      _check_rref,
         "nullspace": _check_nullspace,
+        "hnf": _check_hnf,
+        "hnf-transform": _check_hnf_transform,
     }
     for result in results:
         lib = result["lib"]
